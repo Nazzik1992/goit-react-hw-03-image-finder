@@ -1,97 +1,64 @@
-import Searchbar from 'components/Searchbar/Searchbar';
+import  {Searchbar} from 'components/Searchbar/Searchbar';
 import React, { Component } from 'react';
-import ImageGallery from 'components/ImageGallery/ImageGallery';
-import * as API from './Api/API';
-import style from 'components/Styles.module.css';
+import { ImageGallery } from 'components/ImageGallery/ImageGallery';
+import {imagesArr }  from './Api/API';
 import { Button } from 'components/Button/Button';
-import Modal from 'components/Modal/Modal';
+import { Loader } from './Loader/Loader';
+import style from 'components/Styles.module.css';
 
-export class App extends Component {
+export default class App extends Component {
   state = {
-    search: ' ',
+    search: '',
     images: [],
-    btn: false,
+    page: 1,
     totalHits: 0,
-    loading: false,
-    modal: false,
-    modalImgId: [],
+    isLoading: false,
+    showBtn: false,
   };
 
-  page = 1;
-  resetCounter() {
-    this.page = 1;
-  }
-  inciseCounter() {
-    this.page += 1;
-  }
-  toggleLoading() {
-    this.setState(prevStats => {
-      return { loading: !prevStats.loading };
-    });
-  }
-  makeSearch = async values => {
-    const Arr = await API.imagesArr(values);
-    this.addFirstSearchToState(Arr, values);
-    this.resetCounter();
-    window.scrollTo(0, 0);
-  };
+  componentDidUpdate(prevProps, prevState) {
+    const { search, page, images } = this.state;
 
-  addFirstSearchToState(Arr, values) {
-    this.setState({
-      images: Arr.hits,
-      search: values,
-      totalHits: Arr.totalHits,
-      btn: true,
-    });
-  }
-  addNextSearchToState(Arr) {
-    this.setState(prevStats => ({
-      images: [...prevStats.images, ...Arr.hits],
-      totalHits: Arr.totalHits,
-    }));
-  }
-  nextSearch = async () => {
-    this.toggleLoading();
-    this.inciseCounter();
-    const Arr = await API.NextSearch(this.state, this.page);
-    this.toggleLoading();
-    this.btnCheck();
-    this.addNextSearchToState(Arr);
-  };
-
-  btnCheck() {
-    if (this.state.totalHits <= 12 * this.page) {
-      this.setState({ btn: false });
+    if (search !== prevState.search || page !== prevState.page) {
+      this.setState({ isLoading: true });
+      imagesArr(search, page).then(response => {
+        if (!response.hits.length) {
+          alert(`This request ${search} is not found`);
+          return;
+        }
+        this.setState({
+          images: [...images, ...response.hits],
+          showBtn: this.state.page < Math.ceil(response.totalHits / 12),
+          isLoading: false,
+        });
+      });
     }
   }
-  showModal = id => {
-    const modalImgId = this.state.images.filter(e => Number(id) === e.id);
-    this.setState({ modal: true, modalImgId });
+
+  handleSearch = text => {
+    this.setState({
+      search: text,
+      images: [],
+      page: 1,
+      totalHits: 0,
+    });
   };
-  CloseModal = () => {
-    this.setState({ modal: false });
+
+  handleLoadMore = () => {
+    this.setState(prevState => ({ page: prevState.page + 1 }));
   };
+
   render() {
-    const { images, loading, btn, modal, modalImgId, search } = this.state;
+    const { images, isLoading, showBtn } = this.state;
+    const { handleSearch, handleLoadMore } = this;
 
     return (
       <>
-        <div className={style.App}>
-          <Searchbar onSubmit={this.makeSearch} search={search} />
-          {images.length > 0 ? (
-            <ImageGallery
-              state={this.state}
-              showModal={this.showModal}
-            ></ImageGallery>
-          ) : null}
-          {btn ? <Button loading={loading} onClick={this.nextSearch} /> : null}
-          {modal ? (
-            <Modal
-              modalImgId={modalImgId}
-              modal={modal}
-              closeModal={this.CloseModal}
-            />
-          ) : null}
+      <div className={style.App}>
+        <Searchbar onSubmit={handleSearch} />
+        {isLoading && <Loader />}
+        {images && <ImageGallery images={images} />}
+        {showBtn && <Button onLoadMore={handleLoadMore} />}
         </div>
       </>
     );

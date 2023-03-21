@@ -1,13 +1,18 @@
-import { Blocks } from 'react-loader-spinner';
-export default function Loader() {
-  return (
-    <Blocks
-      visible={true}
-      height="40"
-      width="80"
-      ariaLabel="blocks-loading"
-      wrapperStyle={{}}
-      wrapperClass="blocks-wrapper"
-    />
-  );
-}
+import { ThreeDots } from 'react-loader-spinner';
+
+export const Loader = () => {
+    return (
+      <div style={{ position: 'fixed', top: '50%', left: '50%' }}>
+        {' '}
+        <ThreeDots
+          height="100"
+          width="100"
+          radius="10"
+          color="#395e60"
+          ariaLabel="three-dots-loading"
+          wrapperStyle={{ justifyContent: 'center' }}
+          visible={true}
+        />
+      </div>
+    );
+  };

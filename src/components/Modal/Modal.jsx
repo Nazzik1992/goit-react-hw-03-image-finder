@@ -1,49 +1,58 @@
 import style from 'components/Styles.module.css';
 import { Component } from 'react';
+import { createPortal } from 'react-dom';
 
-export default class Modal extends Component {
-  stats = {};
+const modalRoot = document.getElementById('modal');
 
+export class Modal extends Component {
   componentDidMount() {
-    window.addEventListener('keydown', this.handleEsc);
-    document.querySelector('ul').style = 'overflow: hidden';
+    window.addEventListener('keydown', this.handleKeyDown);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.handleKeyDown);
   }
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleEsc);
-    document.querySelector('ul').style = 'overflow: visible';
-  }
-  handleEsc = e => {
-    if (e.key === 'Escape') {
+
+  handleKeyDown = e => {
+    if (e.code === 'Escape') {
       this.props.closeModal();
-    }
-  };
-  handeleBackDropClick = e => {
-    if (e.currentTarget === e.target) {
-      this.props.closeModal();
-    }
-  };
-  stopScroll() {
-    window.scrollTo(0, 0);
+    };
+
   }
+
+  handleBackdropClick = e => {
+    if(e.currenTarget !== e.target) {
+      
+      this.props.closeModal();
+  };
+  }
+ 
+
   render() {
-    const { modalImgId } = this.props;
-    const [img] = modalImgId;
-    return (
+    const { tags, modalImg } = this.props;
+
+    return createPortal(
       <div
-        key={img.id}
-        className={style.Overlay}
-        onClick={this.handeleBackDropClick}
-      >
-        <div className={style.Modal}>
-          <img
-            src={img.largeImageURL}
-            alt={img.tags}
-            width="600"
-            height="800"
-          />
-        </div>
+      className={style.Overlay}
+      onClick={this.handleBackdropClick}
+    >
+      <div className={style.Modal}>
+        <img
+          src={modalImg}
+          alt={tags}
+          width="600"
+          height="800"
+        />
       </div>
+    </div>,
+      modalRoot
     );
   }
 }
+
+
+
+
+
+
+
